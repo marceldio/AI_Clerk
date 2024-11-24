@@ -1,37 +1,55 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
-from .utils import extract_text_from_image, clean_text
 from django.http import JsonResponse
 import os
 from django.conf import settings
-from .utils import save_text_to_txt, save_text_to_docx
+from .utils import (
+    extract_text_from_image,
+    clean_text,
+    split_text_by_language,
+    extract_contacts,
+    save_text_to_txt,
+    save_text_to_docx
+)
 
 
 class OCRAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
-    SUPPORTED_LANGUAGES = ['eng', 'rus', 'spa']
+    SUPPORTED_LANGUAGES = ['eng', 'rus', 'spa']  # Поддерживаемые языки
 
     def post(self, request, *args, **kwargs):
         file_obj = request.FILES.get('image')
-        language = request.data.get('language', 'eng')  # По умолчанию английский
+        languages = request.data.get('languages', 'eng')  # Языки через запятую
         file_format = request.data.get('format', 'txt')  # Формат файла
 
+        # Проверки входных данных
         if not file_obj:
             return Response({"error": "Не загружено изображение"}, status=400)
 
-        if language not in self.SUPPORTED_LANGUAGES:
-            return Response({"error": f"Неподдерживаемый язык: {language}"}, status=400)
+        lang_list = languages.split(',')
+        for lang in lang_list:
+            if lang not in self.SUPPORTED_LANGUAGES:
+                return Response({"error": f"Неподдерживаемый язык: {lang}"}, status=400)
 
         if file_format not in ['txt', 'docx']:
             return Response({"error": "Формат файла должен быть 'txt' или 'docx'"}, status=400)
 
-        # Распознавание текста
-        raw_text = extract_text_from_image(file_obj, lang=language)
+        # OCR с поддержкой нескольких языков
+        lang_param = '+'.join(lang_list)  # Преобразуем языки в формат Tesseract
+        raw_text = extract_text_from_image(file_obj, lang=lang_param)
+
+        # Очистка текста
         cleaned_text = clean_text(raw_text)
 
-        # Генерируем пути для файлов
+        # Разделение текста по языкам
+        text_by_language = split_text_by_language(raw_text)
+
+        # Извлечение контактов
+        contacts = extract_contacts(" ".join(text_by_language.get("eng", [])))
+
+        # Генерация уникальных имен файлов
         raw_file_path = os.path.join(settings.MEDIA_ROOT, f'raw_text.{file_format}')
         cleaned_file_path = os.path.join(settings.MEDIA_ROOT, f'cleaned_text.{file_format}')
 
@@ -54,7 +72,8 @@ class OCRAPIView(APIView):
         return Response({
             "raw_text": raw_text,
             "cleaned_text": cleaned_text,
+            "text_by_language": text_by_language,
+            "contacts": contacts,
             "raw_file_path": raw_file_path,
             "cleaned_file_path": cleaned_file_path,
         })
-
