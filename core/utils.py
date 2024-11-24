@@ -2,6 +2,41 @@ import re
 from PIL import Image
 import pytesseract
 from docx import Document
+from langdetect import detect
+
+
+def split_text_by_language(text):
+    """
+    Разделяет текст на блоки по языкам.
+    """
+    lines = text.splitlines()
+    result = {"rus": [], "eng": [], "spa": []}
+
+    for line in lines:
+        try:
+            lang = detect(line)
+            if lang in result:
+                result[lang].append(line)
+            else:
+                result["eng"].append(line)  # По умолчанию относим к английскому
+        except:
+            result["eng"].append(line)  # Если язык не определён, считаем английским
+
+    return result
+
+
+def extract_contacts(text):
+    """
+    Извлекает email, ссылки и никнеймы из текста.
+    """
+    emails = re.findall(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', text)
+    urls = re.findall(r'(https?://[^\s]+)', text)
+    telegram_nicks = re.findall(r'@\w+', text)
+    return {
+        "emails": emails,
+        "urls": urls,
+        "telegram_nicks": telegram_nicks,
+    }
 
 
 def extract_text_from_image(image_path, lang='eng'):
@@ -10,7 +45,7 @@ def extract_text_from_image(image_path, lang='eng'):
     """
     try:
         image = Image.open(image_path)
-        text = pytesseract.image_to_string(image, lang=lang)  # Выбор языка
+        text = pytesseract.image_to_string(image, lang=lang)
         return text
     except Exception as e:
         print(f"Ошибка OCR: {e}")
