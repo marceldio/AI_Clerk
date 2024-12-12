@@ -18,16 +18,17 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
-from django.conf import settings
-from django.conf.urls.static import static
+# from django.conf import settings
+# from django.conf.urls.static import static
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('core/', include('core.urls')),  # Подключение маршрутов приложения core
+    path('core/', include('core.urls')),  # маршруты core
+    path('', include('frontend.urls')), # маршруты frontend
 ]
 
-# Добавляем маршруты для медиа-файлов
-if settings.DEBUG:  # Только в режиме разработки
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# # Добавляем маршруты для медиа-файлов
+# if settings.DEBUG:  # Только в режиме разработки
+#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
