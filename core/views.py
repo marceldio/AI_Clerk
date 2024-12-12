@@ -10,9 +10,9 @@ from .utils import (
     split_text_by_language,
     extract_contacts,
     save_text_to_txt,
-    save_text_to_docx
+    save_text_to_docx,
+    convert_pdf_to_images
 )
-
 
 class OCRAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
@@ -20,13 +20,13 @@ class OCRAPIView(APIView):
     SUPPORTED_LANGUAGES = ['eng', 'rus', 'spa']  # Поддерживаемые языки
 
     def post(self, request, *args, **kwargs):
-        file_obj = request.FILES.get('image')
+        file_obj = request.FILES.get('image')  # Поддерживает как PDF, так и изображения
         languages = request.data.get('languages', 'eng')  # Языки через запятую
         file_format = request.data.get('format', 'txt')  # Формат файла
 
         # Проверки входных данных
         if not file_obj:
-            return Response({"error": "Не загружено изображение"}, status=400)
+            return Response({"error": "Не загружен файл"}, status=400)
 
         lang_list = languages.split(',')
         for lang in lang_list:
@@ -36,9 +36,34 @@ class OCRAPIView(APIView):
         if file_format not in ['txt', 'docx']:
             return Response({"error": "Формат файла должен быть 'txt' или 'docx'"}, status=400)
 
-        # OCR с поддержкой нескольких языков
-        lang_param = '+'.join(lang_list)  # Преобразуем языки в формат Tesseract
-        raw_text = extract_text_from_image(file_obj, lang=lang_param)
+        # Проверяем, PDF или изображение
+        file_name = file_obj.name.lower()
+        if file_name.endswith('.pdf'):
+            # Конвертация PDF в изображения
+            pdf_path = os.path.join(settings.MEDIA_ROOT, file_name)
+            with open(pdf_path, 'wb') as f:
+                f.write(file_obj.read())
+            image_paths = convert_pdf_to_images(pdf_path)
+
+            if not image_paths:
+                return Response({"error": "Не удалось обработать PDF"}, status=500)
+
+            # OCR для каждой страницы PDF
+            raw_text = ""
+            for image_path in image_paths:
+                raw_text += extract_text_from_image(image_path, lang='+'.join(lang_list)) + "\n"
+
+            # Удаление временных файлов изображений
+            for image_path in image_paths:
+                if os.path.exists(image_path):
+                    os.remove(image_path)
+
+            # Удаление исходного файла PDF
+            if os.path.exists(pdf_path):
+                os.remove(pdf_path)
+        else:
+            # OCR для изображения
+            raw_text = extract_text_from_image(file_obj, lang='+'.join(lang_list))
 
         # Очистка текста
         cleaned_text = clean_text(raw_text)
@@ -62,11 +87,7 @@ class OCRAPIView(APIView):
                 save_text_to_docx(raw_file_path, raw_text)
                 save_text_to_docx(cleaned_file_path, cleaned_text)
         except Exception as e:
-            print(f"Ошибка сохранения файла: {e}")  # Отладочный вывод
-
-        # Проверяем, созданы ли файлы
-        if not os.path.exists(raw_file_path) or not os.path.exists(cleaned_file_path):
-            return Response({"error": "Файлы не были сохранены"}, status=500)
+            print(f"Ошибка сохранения файла: {e}")
 
         # Возвращаем результат
         return Response({
