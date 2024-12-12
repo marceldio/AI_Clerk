@@ -3,6 +3,27 @@ from PIL import Image
 import pytesseract
 from docx import Document
 from langdetect import detect
+from pdf2image import convert_from_path
+import os
+from django.conf import settings
+
+
+def convert_pdf_to_images(pdf_path):
+    """
+    Конвертирует PDF в список изображений (по страницам).
+    """
+    try:
+        images = convert_from_path(pdf_path)
+        image_paths = []
+        for i, image in enumerate(images):
+            image_name = f"page_{i + 1}.png"
+            image_path = os.path.join(settings.MEDIA_ROOT, image_name)
+            image.save(image_path, "PNG")
+            image_paths.append(image_path)
+        return image_paths
+    except Exception as e:
+        print(f"Ошибка конвертации PDF: {e}")
+        return []
 
 
 def split_text_by_language(text):
