@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обработка файлов</title>
+</head>
+<body>
+<h1>Обработка файлов</h1>
+<form action="/core/api/ocr/" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <label for="image">Загрузите файл:</label>
+    <input type="file" name="image" id="image" required><br><br>
+
+    <label for="languages">Выберите языки:</label>
+    <select name="languages" id="languages" multiple required>
+        {% for lang, name in supported_languages.items %}
+        <option value="{{ lang }}">{{ name }}</option>
+        {% endfor %}
+    </select><br><br>
+
+    <label for="format">Формат (txt/docx):</label>
+    <select name="format" id="format">
+        <option value="txt">TXT</option>
+        <option value="docx">DOCX</option>
+    </select><br><br>
+
+    <button type="submit">Обработать</button>
+</form>
+</body>
+</html>
