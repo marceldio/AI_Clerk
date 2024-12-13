@@ -120,6 +120,6 @@ class OCRAPIView(APIView):
             "cleaned_text": cleaned_text,
             "text_by_language": text_by_language,
             "contacts": contacts,
-            "raw_file_path": raw_file_path,
-            "cleaned_file_path": cleaned_file_path,
+            "raw_file_path": f"{settings.MEDIA_URL}raw_text.{file_format}",
+            "cleaned_file_path": f"{settings.MEDIA_URL}cleaned_text.{file_format}",
         })
