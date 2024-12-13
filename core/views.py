@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.http import JsonResponse
 import os
 from django.conf import settings
 from .utils import (
@@ -12,54 +13,28 @@ from .utils import (
     save_text_to_docx,
     convert_pdf_to_images
 )
-from django.http import FileResponse, JsonResponse
-
-
-def serve_document(request, file_name):
-    """
-    Обслуживает файлы .docx и .txt из папки MEDIA_ROOT.
-    """
-    file_path = os.path.join(settings.MEDIA_ROOT, file_name)
-    if os.path.exists(file_path):
-        if file_name.endswith('.docx'):
-            # Для .docx файлов
-            response = FileResponse(open(file_path, 'rb'), content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-            response['Content-Disposition'] = f'attachment; filename="{file_name}"'
-        elif file_name.endswith('.txt'):
-            # Для .txt файлов
-            response = FileResponse(open(file_path, 'rb'), content_type='text/plain; charset=utf-8')
-            response['Content-Disposition'] = f'inline; filename="{file_name}"'
-        else:
-            return JsonResponse({"error": "Неподдерживаемый формат файла"}, status=400)
-        return response
-    else:
-        return JsonResponse({"error": "Файл не найден"}, status=404)
-
 
 class OCRAPIView(APIView):
     parser_classes = (MultiPartParser, FormParser)
 
     SUPPORTED_LANGUAGES = ['eng', 'rus', 'spa']  # Поддерживаемые языки
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         file_obj = request.FILES.get('image')  # Поддерживает как PDF, так и изображения
-        languages = request.POST.getlist('languages')  # Получаем список языков
+        languages = request.data.get('languages', 'eng')  # Языки через запятую
         file_format = request.data.get('format', 'txt')  # Формат файла
 
         # Проверки входных данных
         if not file_obj:
             return Response({"error": "Не загружен файл"}, status=400)
 
-        # Проверяем, что выбраны поддерживаемые языки
-        for lang in languages:
+        lang_list = languages.split(',')
+        for lang in lang_list:
             if lang not in self.SUPPORTED_LANGUAGES:
                 return Response({"error": f"Неподдерживаемый язык: {lang}"}, status=400)
 
         if file_format not in ['txt', 'docx']:
             return Response({"error": "Формат файла должен быть 'txt' или 'docx'"}, status=400)
-
-        # Формируем параметр для Tesseract (например, 'eng+rus')
-        lang_param = '+'.join(languages)
 
         # Проверяем, PDF или изображение
         file_name = file_obj.name.lower()
@@ -76,7 +51,7 @@ class OCRAPIView(APIView):
             # OCR для каждой страницы PDF
             raw_text = ""
             for image_path in image_paths:
-                raw_text += extract_text_from_image(image_path, lang=lang_param) + "\n"
+                raw_text += extract_text_from_image(image_path, lang='+'.join(lang_list)) + "\n"
 
             # Удаление временных файлов изображений
             for image_path in image_paths:
@@ -88,7 +63,7 @@ class OCRAPIView(APIView):
                 os.remove(pdf_path)
         else:
             # OCR для изображения
-            raw_text = extract_text_from_image(file_obj, lang=lang_param)
+            raw_text = extract_text_from_image(file_obj, lang='+'.join(lang_list))
 
         # Очистка текста
         cleaned_text = clean_text(raw_text)
