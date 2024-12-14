@@ -87,8 +87,10 @@ def save_text_to_txt(file_path, text):
     Сохраняет текст в файл формата .txt.
     """
     try:
+        char_count = len(text)  # Подсчёт количества знаков
+        header = f"Количество знаков в тексте: {char_count}\n\n"
         with open(file_path, 'w', encoding='utf-8') as file:
-            file.write(text)
+            file.write(header + text)
     except Exception as e:
         print(f"Ошибка при сохранении в .txt: {e}")
 
@@ -98,8 +100,14 @@ def save_text_to_docx(file_path, text):
     Сохраняет текст в файл формата .docx.
     """
     try:
-        document = Document()
-        document.add_paragraph(text)
-        document.save(file_path)
+        # Подсчёт количества знаков
+        char_count = len(text)
+        header = f"Количество знаков в тексте: {char_count}"
+        # Создание документа
+        doc = Document()
+        doc.add_paragraph(header)  # Добавляем сообщение о количестве знаков
+        doc.add_paragraph("")  # Пустая строка для разделения
+        doc.add_paragraph(text)  # Добавляем основной текст
+        doc.save(file_path)
     except Exception as e:
         print(f"Ошибка при сохранении в .docx: {e}")
