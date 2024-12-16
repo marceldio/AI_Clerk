@@ -1,3 +1,5 @@
+from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -19,6 +21,7 @@ def serve_document(request, file_name):
     """
     Обслуживает файлы .docx и .txt из папки MEDIA_ROOT.
     """
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
     file_path = os.path.join(settings.MEDIA_ROOT, file_name)
     if os.path.exists(file_path):
         if file_name.endswith('.docx'):
@@ -37,6 +40,7 @@ def serve_document(request, file_name):
 
 
 class OCRAPIView(APIView):
+    permission_classes = [IsAuthenticated, TokenHasReadWriteScope]
     parser_classes = (MultiPartParser, FormParser)
 
     SUPPORTED_LANGUAGES = ['eng', 'rus', 'spa']  # Поддерживаемые языки

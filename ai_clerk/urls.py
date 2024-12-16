@@ -23,8 +23,9 @@ from django.urls import path, include
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('core/', include('core.urls')),  # маршруты core
+    path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')), # маршруты авторизации
+    path('admin/', admin.site.urls), # маршруты админки
+    path('api/', include('core.urls')),  # маршруты core
     path('', include('frontend.urls')), # маршруты frontend
 ]
 

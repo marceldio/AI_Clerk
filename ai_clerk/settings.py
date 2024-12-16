@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "core",
     "rest_framework",
     "frontend",
+    "oauth2_provider",
 ]
 
 MIDDLEWARE = [
@@ -80,10 +81,15 @@ WSGI_APPLICATION = "ai_clerk.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "u0387097_aiclerk",
+        "USER": "u0387097_admin",
+        "PASSWORD": "secure_password",
+        "HOST": "localhost",  # Если MySQL на том же сервере
+        "PORT": "3306",  # Порт MySQL по умолчанию
     }
 }
+
 
 
 # Password validation
@@ -132,3 +138,18 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # Указываем на дире
 
 # mimetypes.add_type("text/plain", ".txt", strict=True)
 
+OAUTH2_PROVIDER = {
+    "PKCE_REQUIRED": True,  # Включает требование PKCE
+    "AUTHORIZATION_CODE_EXPIRE_SECONDS": 3600,  # Время жизни authorization code
+    "ACCESS_TOKEN_EXPIRE_SECONDS": 3600,  # Время жизни access токена
+}
+
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "oauth2_provider.contrib.rest_framework.OAuth2Authentication",  # Поддержка OAuth2
+        "rest_framework.authentication.SessionAuthentication",  # Поддержка сессий
+    ],
+}
