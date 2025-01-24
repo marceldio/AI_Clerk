@@ -16,9 +16,7 @@ transformers = "^4.46.3"
 python-docx = "^1.1.2"
 langdetect = "^1.0.9"
 pdf2image = "^1.17.0"
-mysqlclient = "^2.2.6"
-django-oauth-toolkit = "^3.0.1"
-drf-spectacular = "^0.28.0"
+mysqlclient = "^2.2.7"
 
 
 [tool.poetry.group.dev.dependencies]

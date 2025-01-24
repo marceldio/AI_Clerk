@@ -1,0 +1,99 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="album py-5 bg-body-tertiary">
+    <div class="container">
+        <div class="container mt-5">
+            <h1 class="text-center mb-4">Обработка файлов</h1>
+            <div id="alert-box" class="alert alert-success d-none" role="alert">
+                Файл успешно обработан!
+            </div>
+
+            <form action="/core/ocr/" method="post" enctype="multipart/form-data"
+                  class="p-4 border rounded shadow-sm">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="image" class="form-label">Загрузите файл:</label>
+                    <input type="file" name="image" id="image" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label for="format" class="form-label">Формат (txt/docx):</label>
+                    <select name="format" id="format" class="form-select">
+                        <option value="txt">TXT</option>
+                        <option value="docx">DOCX</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-100" id="submit-btn">
+                    Обработать
+                </button>
+            </form>
+
+        </div>
+
+        <script>
+            const form = document.querySelector('form');
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault(); // Предотвращаем стандартную отправку формы
+                const submitBtn = document.getElementById('submit-btn');
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Обработка...';
+                submitBtn.disabled = true;
+
+                try {
+                    const formData = new FormData(form);
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+
+                        // Сброс состояния кнопки
+                        submitBtn.innerHTML = 'Обработать';
+                        submitBtn.disabled = false;
+
+                        // Показ уведомления
+                        const alertBox = document.getElementById('alert-box');
+                        alertBox.classList.remove('d-none');
+                        alertBox.textContent = 'Файл успешно обработан!';
+
+                        // Убираем уведомление через 5 секунд
+                        setTimeout(() => {
+                            alertBox.classList.add('d-none');
+                        }, 5000); // 5000 миллисекунд = 5 секунд
+
+                        // Открытие файла в зависимости от формата
+                        if (data.raw_file_path.endsWith('.txt')) {
+                            window.open(data.raw_file_path, '_blank'); // Открываем txt в новой вкладке
+                        } else {
+                            window.location.href = data.raw_file_path; // Перенаправляем на скачивание docx
+                        }
+                    } else {
+                        const error = await response.json();
+
+                        // Сброс состояния кнопки при ошибке
+                        submitBtn.innerHTML = 'Обработать';
+                        submitBtn.disabled = false;
+
+                        alert(`Ошибка: ${error.error}`);
+                    }
+                } catch (err) {
+                    console.error('Произошла ошибка:', err);
+
+                    // Сброс состояния кнопки при исключении
+                    submitBtn.innerHTML = 'Обработать';
+                    submitBtn.disabled = false;
+
+                    alert('Ошибка при обработке файла!');
+                } finally {
+                    // Убедитесь, что кнопка всегда возвращается в исходное состояние
+                    submitBtn.innerHTML = 'Обработать';
+                    submitBtn.disabled = false;
+                }
+            });
+        </script>
+
+    </div>
+</div>
+
+{% endblock %}
