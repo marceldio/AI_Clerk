@@ -73,15 +73,6 @@ def extract_text_from_image(image_path, lang='eng'):
         return ""
 
 
-def clean_text(text):
-    """
-    Убирает лишние символы и переносы строк.
-    """
-    # Удаляем лишние пробелы и переводим текст в одну строку
-    cleaned_text = re.sub(r'\s+', ' ', text).strip()
-    return cleaned_text
-
-
 def save_text_to_txt(file_path, text):
     """
     Сохраняет текст в файл формата .txt.

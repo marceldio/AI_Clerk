@@ -1,7 +1,8 @@
 from django.urls import path
-from .views import OCRAPIView, serve_document
+from .views import ocr_view, serve_document
+
 
 urlpatterns = [
-    path('api/ocr/', OCRAPIView.as_view(), name='ocr_api'),
+    path('ocr/', ocr_view, name='ocr_view'),
     path('media/<str:file_name>/', serve_document, name='serve_document'),
 ]
