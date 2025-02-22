@@ -1,24 +1,24 @@
-[tool.poetry]
-name = "Ai_Clerk"
-version = "0.1.0"
+[project]
+name = "AI_Clerk"
+version = "1.0.0"
 description = "AI Clerk - автоматизация OCR, NLP и заполнения форм"
-authors = ["md <marceldiomare@gmail.com>"]
+authors = [{ name = "Marcel Dio", email = "marceldiomare@gmail.com" }]
 readme = "README.md"
+requires-python = ">=3.10,<3.13"
 
-[tool.poetry.dependencies]
-python = "^3.12"
-django = "^5.1.3"
-pytesseract = "^0.3.13"
-pillow = "^11.0.0"
-spacy = "^3.8.2"
-transformers = "^4.46.3"
-python-docx = "^1.1.2"
-langdetect = "^1.0.9"
-pdf2image = "^1.17.0"
-redis = "^5.2.1"
-python-dotenv = "^1.0.1"
-
-
+dependencies = [
+    "django>=5.1.5",
+    "pytesseract>=0.3.13",
+    "pillow>=11.0.0",
+    "spacy>=3.8.2,<3.13",  # Ограничиваем версию Python для spacy
+    "transformers>=4.46.3",
+    "python-docx>=1.1.2",
+    "langdetect>=1.0.9",
+    "pdf2image>=1.17.0",
+    "redis>=5.2.1",
+    "python-dotenv>=1.0.1",
+    "smart-open>=5.2.1,<8.0.0"  # Добавляем ограничение для совместимости
+]
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.10.0"
