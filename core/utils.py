@@ -1,11 +1,12 @@
+import os
 import re
 from PIL import Image
 import pytesseract
 from docx import Document
 from langdetect import detect
 from pdf2image import convert_from_path
-import os
-from django.conf import settings
+import subprocess
+import sys
 
 
 def convert_pdf_to_images(pdf_path):
@@ -73,12 +74,21 @@ def extract_text_from_image(image_path, lang='eng'):
         return ""
 
 
+def get_output_directory():
+    """ Определяет папку для сохранения файлов. """
+    if getattr(sys, 'frozen', False):  # Если запущено как .exe
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    output_dir = os.path.join(base_path, "output")
+    os.makedirs(output_dir, exist_ok=True)
+    return output_dir
+
+
 def save_text_to_txt(file_path, text):
-    """
-    Сохраняет текст в файл формата .txt.
-    """
+    """ Сохраняет текст в файл .txt """
     try:
-        char_count = len(text)  # Подсчёт количества знаков
+        char_count = len(text)
         header = f"Количество знаков в тексте: {char_count}\n\n"
         with open(file_path, 'w', encoding='utf-8') as file:
             file.write(header + text)
@@ -87,18 +97,14 @@ def save_text_to_txt(file_path, text):
 
 
 def save_text_to_docx(file_path, text):
-    """
-    Сохраняет текст в файл формата .docx.
-    """
+    """ Сохраняет текст в файл .docx """
     try:
-        # Подсчёт количества знаков
         char_count = len(text)
         header = f"Количество знаков в тексте: {char_count}"
-        # Создание документа
         doc = Document()
-        doc.add_paragraph(header)  # Добавляем сообщение о количестве знаков
-        doc.add_paragraph("")  # Пустая строка для разделения
-        doc.add_paragraph(text)  # Добавляем основной текст
+        doc.add_paragraph(header)
+        doc.add_paragraph("")
+        doc.add_paragraph(text)
         doc.save(file_path)
     except Exception as e:
         print(f"Ошибка при сохранении в .docx: {e}")

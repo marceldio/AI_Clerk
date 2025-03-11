@@ -89,7 +89,7 @@ def ocr_view(request):
             "raw_file_path": f"{settings.MEDIA_URL}raw_text.{file_format}",
         })
 
-    return render(request, 'core/ocr_form.html')  # Замените на вашу HTML форму
+    return JsonResponse({"error": "Метод GET не поддерживается"}, status=405)
 
 
 def serve_document(request, file_name):
